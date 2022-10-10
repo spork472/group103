@@ -133,6 +133,77 @@ saveas(f, ['fig4','.png'])
 % sprintf('Total distance travelled: \n%.2f', DECK)
 %%%%%%%%%%%%%%%%%%%%%%%%% END 4 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%% TASK 5 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Step 1: Finding y(i), y(i+1), y(i+2) and y(i+3)
+H = 74 ; % Height of jump point (in m)
+D = 31 ; % Height of deck (in m)
+c = 0.9 ; % Drag coefficient (in kg/m)
+m = 80 ; % Mass of jumper (in kg)
+L = 25 ; % Length of bungee rope (in m)
+k = 90 ; % Spring constant of bungee rope (in N/m)
+g = 9.8 ; % Acceleration due to gravity (in m/s^2)
+
+C = c/m ; % Drag/mass
+K = k/m ; % Spring constant/mass
+
+cam = H - D ;
+
+t = 100 ;
+h = 0.1 ;
+timeSpan = 0:h:t ;
+y0 = 0 ;
+v0 = 0 ; 
+
+dvdt = @(y, v) g - C .* abs(v) .* v - max(0, K .*(y-L)) ;
+f = dvdt ;
+
+position =  zeros(1,length(timeSpan)) ;
+velocity =  zeros(1,length(timeSpan),1) ;
+    
+y = 0 ; 
+v = 0 ;
+    
+position(1) = y ;
+velocity(1) = v ;
+    
+for i = 2:length(timeSpan)
+    k1 = h * v ;
+    r1 = h * f(y, v) ;
+       
+    k2 = h * (v + r1 / 2) ;
+    r2 = h * f(y + k1 / 2 , v + r1 / 2) ;
+       
+    k3 = h * (v + r2 / 2) ;
+    r3 = h * f(y + k2 / 2 , v + r2 / 2) ;
+       
+    k4 = h * (v + r3) ;
+    r4 = h * f(y + k3, v + r3) ;
+       
+    y = y + (1/6) * (k1 + 2*k2 + 2*k3 + k4) ;
+    v = v + (1/6) * (r1 + 2*r2 + 2*r3 + r4) ;
+
+    position(i) = y ;
+    velocity(i) = v ;
+
+    if i > 3 && position(i-2) < cam && position(i-1) > cam
+        y1 = position(i-3) ; % y(i)
+        t1 = (i-3) * h ;     % t(i)
+        y2 = position(i-2) ; % y(i+1)
+        t2 = (i-2) * h ;     % t(i+1)
+        y3 = position(i-1) ; % y(i+2)
+        t3 = (i-1) * h ;     % t(i+1)
+        y4 = position(i) ;   % y(i+3)
+        t4 = i * h ;         % t(i+3)
+       break 
+    end 
+end
+
+%% Step 2: Create an interpolating polynomial 'p(t)'
+% Points to be used for interpolating polynomial:
+% (y(i), t(i)), (y(i+1), t(i+1)), (y(i+2), t(i+2)), (y(i+3), t(i+3))
+% (42.9978, 3.3335), (42.9993, 3.3336), (43.0008, 3.3337), (43.0022, 3.3338) 
+
+%% Step 3: Find value of t such that p(t) = H - D
+
 %to do: Implement function for divided diff interpolation
 % div difference is easier to get the polynomial back as a 
 % anon function for plotting
